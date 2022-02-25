@@ -87,6 +87,7 @@ contract Strategy is BaseStrategy {
     address internal constant solidlyRouter =
         0xa38cd27185a464914D3046f0AB9d43356B34829D;
     bool public tradesEnabled;
+    bool public realiseLosses;
     bool public depositerAvoid;
     address public tradeFactory =
         address(0xD3f89C21719Ec5961a3E6B0f9bBf9F9b4180E9e9);
@@ -242,28 +243,33 @@ contract Strategy is BaseStrategy {
             _profit = assets.sub(debt);
 
             amountToFree = _profit.add(_debtPayment);
-
-            //amountToFree > 0 checking (included in the if statement)
-            if (wantBal < amountToFree) {
-                liquidatePosition(amountToFree);
-
-                uint256 newLoose = want.balanceOf(address(this));
-
-                //if we dont have enough money adjust _debtOutstanding and only change profit if needed
-                if (newLoose < amountToFree) {
-                    if (_profit > newLoose) {
-                        _profit = newLoose;
-                        _debtPayment = 0;
-                    } else {
-                        _debtPayment = Math.min(
-                            newLoose - _profit,
-                            _debtPayment
-                        );
-                    }
-                }
-            }
         } else {
             //loss should never happen. so leave blank. small potential for IP i suppose. lets not record if so and handle manually
+            //dont withdraw either incase we realise losses
+            //withdraw with loss
+            if (realiseLosses) {
+                _loss = debt.sub(assets);
+                _debtPayment = _debtOutstanding.sub(_loss);
+
+                amountToFree = _debtPayment;
+            }
+        }
+
+        //amountToFree > 0 checking (included in the if statement)
+        if (wantBal < amountToFree) {
+            liquidatePosition(amountToFree);
+
+            uint256 newLoose = want.balanceOf(address(this));
+
+            //if we dont have enough money adjust _debtOutstanding and only change profit if needed
+            if (newLoose < amountToFree) {
+                if (_profit > newLoose) {
+                    _profit = newLoose;
+                    _debtPayment = 0;
+                } else {
+                    _debtPayment = Math.min(newLoose - _profit, _debtPayment);
+                }
+            }
         }
 
         // we're done harvesting, so reset our trigger if we used it
@@ -277,7 +283,8 @@ contract Strategy is BaseStrategy {
         // send all of our want tokens to be deposited
         uint256 toInvest = balanceOfWant();
         // stake only if we have something to stake
-        if (toInvest > 1e6) {
+        // dont bother for less than 0.1 boo
+        if (toInvest > 1e17) {
             uint256 booB = boo.balanceOf(lpToken);
             uint256 xbooB = xboo.balanceOf(lpToken);
 
@@ -533,6 +540,11 @@ contract Strategy is BaseStrategy {
         onlyAuthorized
     {
         minHarvestCredit = _minHarvestCredit;
+    }
+
+    ///@notice When our strategy has this much credit, harvestTrigger will be true.
+    function setRealiseLosses(bool _realiseLoosses) external onlyAuthorized {
+        realiseLosses = _realiseLoosses;
     }
 
     ///@notice When our strategy has this much credit, harvestTrigger will be true.

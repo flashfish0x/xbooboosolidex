@@ -34,9 +34,11 @@ def test_emergency_shutdown_from_vault(
 
     # set emergency and exit, then confirm that the strategy has no funds
     vault.setEmergencyShutdown(True, {"from": gov})
+    strategy.setRealiseLosses(True, {"from": gov})
     chain.sleep(1)
     strategy.setDoHealthCheck(False, {"from": gov})
-    strategy.harvest({"from": gov})
+    tx = strategy.harvest({"from": gov})
+    print(tx.events)
     chain.sleep(1)
     assert math.isclose(strategy.estimatedTotalAssets(), 0, abs_tol=5)
 
