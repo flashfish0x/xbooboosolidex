@@ -5,7 +5,7 @@ import math
 
 
 def test_migration(
-    Strategy0xDAOStaker,
+    Strategy,
     gov,
     token,
     vault,
@@ -18,8 +18,8 @@ def test_migration(
     healthCheck,
     amount,
     strategy_name,
-    masterchef,
-    pid,
+    trade_factory,
+    ymechs_safe
 ):
 
     ## deposit to the vault after approving
@@ -32,9 +32,8 @@ def test_migration(
 
     # deploy our new strategy
     new_strategy = strategist.deploy(
-        Strategy0xDAOStaker,
+        Strategy,
         vault,
-        pid,
         strategy_name,
     )
     total_old = strategy.estimatedTotalAssets()
@@ -53,7 +52,9 @@ def test_migration(
     vault.migrateStrategy(strategy, new_strategy, {"from": gov})
     new_strategy.setHealthCheck(healthCheck, {"from": gov})
     new_strategy.setDoHealthCheck(True, {"from": gov})
-
+    trade_factory.grantRole(
+        trade_factory.STRATEGY(), new_strategy, {"from": ymechs_safe, "gas_price": "0 gwei"}
+    )
     # assert that our old strategy is empty
     updated_total_old = strategy.estimatedTotalAssets()
     assert updated_total_old == 0
