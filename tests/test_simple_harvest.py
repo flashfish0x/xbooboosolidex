@@ -13,6 +13,8 @@ def test_simple_harvest(
     strategy,
     chain,
     strategist_ms,
+    sex,
+    solid,
     amount,
     accounts,
 ):
@@ -30,7 +32,7 @@ def test_simple_harvest(
     chain.sleep(1)
     old_assets = vault.totalAssets()
     assert old_assets > 0
-    assert token.balanceOf(strategy) == 0
+    assert token.balanceOf(strategy) < 1e12 #we leave dust boo behind
     assert strategy.estimatedTotalAssets() > 0
     print("\nStarting vault total assets: ", old_assets / (10 ** token.decimals()))
 
@@ -46,6 +48,9 @@ def test_simple_harvest(
     chain.sleep(1)
     strategy.setDoHealthCheck(False, {"from": gov})
     strategy.harvest({"from": gov})
+
+    assert sex.balanceOf(strategy) > 0
+    assert solid.balanceOf(strategy) > 0
     chain.sleep(1)
 
     new_assets = vault.totalAssets()

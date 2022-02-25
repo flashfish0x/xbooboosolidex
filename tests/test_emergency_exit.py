@@ -14,7 +14,8 @@ def test_emergency_exit(
     amount,
 ):
     ## deposit to the vault after approving
-    startingWhale = token.balanceOf(whale)
+    aidrop = 10*1e18
+    startingWhale = token.balanceOf(whale)-aidrop
     token.approve(vault, 2 ** 256 - 1, {"from": whale})
     vault.deposit(amount, {"from": whale})
     chain.sleep(1)
@@ -26,6 +27,7 @@ def test_emergency_exit(
     chain.sleep(86400)
     chain.mine(1)
     chain.sleep(1)
+    token.transfer(vault, aidrop, {"from": whale})
     strategy.setDoHealthCheck(False, {"from": gov})
     strategy.harvest({"from": gov})
     chain.sleep(1)
@@ -94,86 +96,3 @@ def test_emergency_exit_with_profit(
     assert token.balanceOf(whale) + donation >= startingWhale
 
 
-def test_emergency_exit_with_no_gain_or_loss(
-    gov,
-    token,
-    vault,
-    whale,
-    strategy,
-    chain,
-    amount,
-    pid,
-    xboo,
-):
-    ## deposit to the vault after approving. turn off health check since we're doing weird shit
-    strategy.setDoHealthCheck(False, {"from": gov})
-    startingWhale = token.balanceOf(whale)
-    token.approve(vault, 2 ** 256 - 1, {"from": whale})
-    vault.deposit(amount, {"from": whale})
-    chain.sleep(1)
-    strategy.setDoHealthCheck(False, {"from": gov})
-    strategy.harvest({"from": gov})
-    chain.sleep(1)
-
-    # send away all funds, will need to alter this based on strategy
-    strategy.emergencyWithdraw({"from": gov})
-    to_send = xboo.balanceOf(strategy)
-    print("Balance of Vault", to_send)
-    xboo.transfer(gov, to_send, {"from": strategy})
-    assert strategy.estimatedTotalAssets() == 0
-
-    # have our whale send in exactly our debtOutstanding
-    whale_to_give = vault.debtOutstanding(strategy)
-    token.transfer(strategy, whale_to_give, {"from": whale})
-
-    # set emergency and exit, then confirm that the strategy has no funds
-    strategy.setEmergencyExit({"from": gov})
-    strategy.setDoHealthCheck(False, {"from": gov})
-    chain.sleep(1)
-    strategy.setDoHealthCheck(False, {"from": gov})
-    strategy.harvest({"from": gov})
-    chain.sleep(1)
-    assert strategy.estimatedTotalAssets() == 0
-
-    # simulate a day of waiting for share price to bump back up
-    chain.sleep(86400)
-    chain.mine(1)
-
-    # withdraw and confirm we made money, accounting for all of the funds we lost lol
-    vault.withdraw({"from": whale})
-    assert token.balanceOf(whale) + amount + whale_to_give >= startingWhale
-
-
-def test_emergency_withdraw(
-    gov,
-    token,
-    vault,
-    whale,
-    strategy,
-    chain,
-    amount,
-):
-    ## deposit to the vault after approving
-    startingWhale = token.balanceOf(whale)
-    token.approve(vault, 2 ** 256 - 1, {"from": whale})
-    vault.deposit(amount, {"from": whale})
-    chain.sleep(1)
-    strategy.setDoHealthCheck(False, {"from": gov})
-    strategy.harvest({"from": gov})
-    chain.sleep(1)
-
-    # simulate 1 day of earnings
-    chain.sleep(86400)
-    chain.mine(1)
-    chain.sleep(1)
-    strategy.setDoHealthCheck(False, {"from": gov})
-    strategy.harvest({"from": gov})
-    chain.sleep(1)
-
-    # set emergency withdraw
-    strategy.emergencyWithdraw({"from": gov})
-    chain.sleep(1)
-
-    # withdraw and confirm we made money
-    vault.withdraw({"from": whale})
-    assert token.balanceOf(whale) >= startingWhale

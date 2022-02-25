@@ -33,9 +33,9 @@ def test_change_debt_with_profit(
     chain.sleep(86400 * 3)  # fast forward so our min delay is passed
     chain.mine(1)
 
-    tx = strategy.harvestTrigger(0, {"from": gov})
-    print("\nShould we harvest? Should be true.", tx)
-    assert tx == True
+    t1 = strategy.harvestTrigger(0, {"from": gov})
+    print("\nShould we harvest? Should be true.", t1)
+    assert t1 == True
 
     # our whale donates dust to the vault, what a nice person!
     donation = amount

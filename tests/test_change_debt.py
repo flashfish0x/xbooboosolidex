@@ -15,7 +15,8 @@ def test_change_debt(
     amount,
 ):
     ## deposit to the vault after approving
-    startingWhale = token.balanceOf(whale)
+    aidrop = 10*1e18
+    startingWhale = token.balanceOf(whale)-aidrop
     token.approve(vault, 2 ** 256 - 1, {"from": whale})
     vault.deposit(amount, {"from": whale})
     chain.sleep(1)
@@ -41,6 +42,7 @@ def test_change_debt(
     # simulate one day of earnings
     chain.sleep(86400)
     chain.mine(1)
+    token.transfer(vault, aidrop, {"from": whale})
 
     # set DebtRatio back to 100%
     vault.updateStrategyDebtRatio(strategy, currentDebt, {"from": gov})

@@ -101,6 +101,8 @@ contract Strategy is BaseStrategy {
     IERC20 internal constant solid =
         IERC20(0x888EF71766ca594DED1F0FA3AE64eD2941740A20);
 
+    uint256 public lpSlippage = 995; //0.5% slippage allowance
+
     string internal stratName; // we use this for our strategy's name on cloning
     address public lpToken =
         address(0x5804F6C40f44cF7593F73cf3aa16F7037213A623);
@@ -275,16 +277,23 @@ contract Strategy is BaseStrategy {
         // send all of our want tokens to be deposited
         uint256 toInvest = balanceOfWant();
         // stake only if we have something to stake
-        if (toInvest > 0) {
+        if (toInvest > 1e6) {
             uint256 booB = boo.balanceOf(lpToken);
             uint256 xbooB = xboo.balanceOf(lpToken);
 
             //ratio we need of boo to xboo to lp
-            uint256 ratio_lp = xbooB.mul(1e18).div(booB);
+            uint256 ratio_lp = booB.mul(1e18).div(xbooB);
 
             //ratio boo to xboo in xBoo
             uint256 ratio_xboo = xboo.xBOOForBOO(1e18);
 
+            //we compare ratios to make sure there isnt too much slippage. only care if xboo is overvalued
+
+            //allow 0.5% slippage
+            if (ratio_lp < ratio_xboo.mul(lpSlippage).div(1000)) {
+                //dont do anything because we would be lping into the lp at a bad price
+                return;
+            }
             //amount to swap is:
             // B0 * Rxboo / (Rlp + Rxboo)
             uint256 numerator = toInvest.mul(ratio_xboo);
@@ -524,6 +533,11 @@ contract Strategy is BaseStrategy {
         onlyAuthorized
     {
         minHarvestCredit = _minHarvestCredit;
+    }
+
+    ///@notice When our strategy has this much credit, harvestTrigger will be true.
+    function setLpSlippage(uint256 _slippage) external onlyAuthorized {
+        lpSlippage = _slippage;
     }
 
     function setDepositerAvoid(bool _avoid) external onlyAuthorized {

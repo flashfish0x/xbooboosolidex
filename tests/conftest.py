@@ -25,6 +25,15 @@ def weth():
 
 
 @pytest.fixture(scope="module")
+def sex():
+    yield Contract("0xD31Fcd1f7Ba190dBc75354046F6024A9b86014d7")
+
+
+@pytest.fixture(scope="module")
+def solid():
+    yield Contract("0x888EF71766ca594DED1F0FA3AE64eD2941740A20")
+
+@pytest.fixture(scope="module")
 def wbtc():
     yield Contract("0x321162Cd933E2Be498Cd2267a90534A804051b11")
 
@@ -53,6 +62,10 @@ def boo():
 def xboo():
     yield Contract("0xa48d959AE2E88f1dAA7D5F611E01908106dE7598")
 
+@pytest.fixture(scope="module")
+def lpdepositer():
+    yield Contract("0x26E1A0d851CF28E697870e1b7F053B605C8b060F")
+
 
 # Define relevant tokens and contracts in this section
 @pytest.fixture(scope="module")
@@ -70,7 +83,7 @@ def whale(accounts):
 # this is the amount of funds we have our whale deposit. adjust this as needed based on their wallet balance
 @pytest.fixture(scope="module")
 def amount(token):  # use today's exchange rates to have similar $$ amounts
-    amount = 15000 * (10 ** token.decimals())
+    amount = 5000 * (10 ** token.decimals())
     yield amount
 
 

@@ -13,8 +13,6 @@ def test_base_strategy(
     strategy,
     chain,
     amount,
-    masterchef,
-    pid,
 ):
     ## deposit to the vault after approving
     startingWhale = token.balanceOf(whale)
@@ -22,12 +20,7 @@ def test_base_strategy(
     vault.deposit(amount, {"from": whale})
     newWhale = token.balanceOf(whale)
 
-    to_view = []
-    for i in range(6):
-        addy = masterchef.poolInfo(i)[0]
-        to_view.append(addy)
-    print("These are our addresses", to_view)
-    print("This is our pid", pid)
+   
     print("This is our token symbol:", token.symbol())
 
     # test our harvestTrigger for when we have a profit (don't normally need this)
