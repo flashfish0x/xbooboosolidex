@@ -241,7 +241,8 @@ contract Strategy is BaseStrategy {
 
             amountToFree = _profit.add(_debtPayment);
 
-            if (amountToFree > 0 && wantBal < amountToFree) {
+            //amountToFree > 0 checking (included in the if statement)
+            if (wantBal < amountToFree) {
                 liquidatePosition(amountToFree);
 
                 uint256 newLoose = want.balanceOf(address(this));
