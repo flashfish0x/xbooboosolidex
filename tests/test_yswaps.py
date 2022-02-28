@@ -23,11 +23,12 @@ def test_yswap(
     sex,
     solid,
     multicall_swapper,
+    strategist_ms
 ):
     strategy = liveBooStrat
     vault = Contract(strategy.vault())
     token = Contract(vault.token())
-    trade_factory = Contract('0xcCF3a9d634C70cFB61e7618DA1E3b55Bb8D41945')
+    #trade_factory = Contract('0xcCF3a9d634C70cFB61e7618DA1E3b55Bb8D41945')
 
     print(token)
     print("CallOnlyOptimizationRequired(): ", eth_utils.to_hex(
@@ -53,12 +54,12 @@ def test_yswap(
     strategist = accounts.at(strategy.strategist(), force=True)
 
     gov = accounts.at(vault.governance(), force=True)
-    trade_factory.grantRole(
-        trade_factory.STRATEGY(), strategy, {
-            "from": ymechs_safe, "gas_price": "0 gwei"}
-    )
-    trade_factory.addSwappers([multicall_swapper], {"from": ymechs_safe})
-    strategy.updateTradeFactory(trade_factory, {'from': gov})
+    # trade_factory.grantRole(
+    #     trade_factory.STRATEGY(), strategy, {
+    #         "from": ymechs_safe, "gas_price": "0 gwei"}
+    # )
+    # trade_factory.addSwappers([multicall_swapper], {"from": ymechs_safe})
+    # strategy.updateTradeFactory(trade_factory, {'from': gov})
 
     vault_before = token.balanceOf(vault)
     strat_before = token.balanceOf(strategy)
