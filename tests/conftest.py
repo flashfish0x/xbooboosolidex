@@ -2,6 +2,8 @@ import pytest
 from brownie import config, Wei, Contract
 
 # Snapshots the chain before each test and reverts after test completion.
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
@@ -10,7 +12,7 @@ def isolation(fn_isolation):
 # this is the name we want to give our strategy
 @pytest.fixture(scope="module")
 def strategy_name():
-    strategy_name = "booXbooSolidlyLp"
+    strategy_name = "boo_Xboo_veLp_Solidex"
     yield strategy_name
 
 
@@ -32,6 +34,7 @@ def sex():
 @pytest.fixture(scope="module")
 def solid():
     yield Contract("0x888EF71766ca594DED1F0FA3AE64eD2941740A20")
+
 
 @pytest.fixture(scope="module")
 def wbtc():
@@ -62,6 +65,7 @@ def boo():
 def xboo():
     yield Contract("0xa48d959AE2E88f1dAA7D5F611E01908106dE7598")
 
+
 @pytest.fixture(scope="module")
 def lpdepositer():
     yield Contract("0x26E1A0d851CF28E697870e1b7F053B605C8b060F")
@@ -76,7 +80,8 @@ def token(boo):
 @pytest.fixture(scope="module")
 def whale(accounts):
     # Update this with a large holder of your want token (the largest EOA holder of LP)
-    whale = accounts.at("0x95478C4F7D22D1048F46100001c2C69D2BA57380", force=True)
+    whale = accounts.at(
+        "0x95478C4F7D22D1048F46100001c2C69D2BA57380", force=True)
     yield whale
 
 
@@ -102,7 +107,23 @@ def healthCheck():
     yield Contract("0xf13Cd6887C62B5beC145e30c38c4938c5E627fe0")
 
 
+@pytest.fixture(scope="module")
+def liveBooStrat():
+    yield Contract("0xADE3BaC94177295329474aAd6A253Bae979BFA68")
+
+
+@pytest.fixture(scope="module")
+def multicall_swapper():
+    yield Contract("0x590B3e12Ded77dE66CBF45050cD07a65d1F51dDD")
+
+
+@pytest.fixture(scope="module")
+def spooky_router():
+    yield Contract("0xF491e7B69E4244ad4002BC14e878a34207E38c29")
+
 # zero address
+
+
 @pytest.fixture(scope="module")
 def zero_address():
     zero_address = "0x0000000000000000000000000000000000000000"
@@ -137,14 +158,18 @@ def rewards(accounts):
 def guardian(accounts):
     yield accounts[2]
 
+
 @pytest.fixture
 def trade_factory():
-    #yield Contract("0xBf26Ff7C7367ee7075443c4F95dEeeE77432614d")
+    # yield Contract("0xBf26Ff7C7367ee7075443c4F95dEeeE77432614d")
     yield Contract("0xD3f89C21719Ec5961a3E6B0f9bBf9F9b4180E9e9")
+
 
 @pytest.fixture(scope="module")
 def management(accounts):
     yield accounts[3]
+
+
 @pytest.fixture
 def ymechs_safe(accounts):
     yield accounts.at("0x9f2A061d6fEF20ad3A656e23fd9C814b75fd5803", force=True)
@@ -180,7 +205,6 @@ def vault(pm, gov, rewards, guardian, management, token, chain):
 #     yield vault
 
 
-
 # replace the first value with the name of your strategy
 @pytest.fixture(scope="function")
 def strategy(
@@ -198,10 +222,11 @@ def strategy(
         Strategy,
         vault,
         strategy_name
-        
+
     )
     trade_factory.grantRole(
-        trade_factory.STRATEGY(), strategy, {"from": ymechs_safe, "gas_price": "0 gwei"}
+        trade_factory.STRATEGY(), strategy, {
+            "from": ymechs_safe, "gas_price": "0 gwei"}
     )
     strategy.setKeeper(keeper, {"from": gov})
     # set our management fee to zero so it doesn't mess with our profit checking
