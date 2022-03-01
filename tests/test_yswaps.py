@@ -17,6 +17,7 @@ def test_yswap(
     ymechs_safe,
     chain,
     accounts,
+    solidex_router,
     interface,
     spooky_router,
     trade_factory,
@@ -27,7 +28,7 @@ def test_yswap(
     strategy = liveBooStrat
     vault = Contract(strategy.vault())
     token = Contract(vault.token())
-    trade_factory = Contract('0xcCF3a9d634C70cFB61e7618DA1E3b55Bb8D41945')
+    # trade_factory = Contract('0xcCF3a9d634C70cFB61e7618DA1E3b55Bb8D41945')
 
     print(token)
     print("CallOnlyOptimizationRequired(): ", eth_utils.to_hex(
@@ -53,12 +54,12 @@ def test_yswap(
     strategist = accounts.at(strategy.strategist(), force=True)
 
     gov = accounts.at(vault.governance(), force=True)
-    trade_factory.grantRole(
-        trade_factory.STRATEGY(), strategy, {
-            "from": ymechs_safe, "gas_price": "0 gwei"}
-    )
-    trade_factory.addSwappers([multicall_swapper], {"from": ymechs_safe})
-    strategy.updateTradeFactory(trade_factory, {'from': gov})
+    # trade_factory.grantRole(
+    #     trade_factory.STRATEGY(), strategy, {
+    #         "from": ymechs_safe, "gas_price": "0 gwei"}
+    # )
+    # trade_factory.addSwappers([multicall_swapper], {"from": ymechs_safe})
+    # strategy.updateTradeFactory(trade_factory, {'from': gov})
 
     vault_before = token.balanceOf(vault)
     strat_before = token.balanceOf(strategy)
@@ -67,50 +68,117 @@ def test_yswap(
 
     token_out = token
 
-    ins = [solid]
+    id = solid
 
     print(f"Executing trades...")
-    for id in ins:
 
-        print(id.address)
-        receiver = strategy.address
-        token_in = id
+    print(id.address)
+    receiver = strategy.address
+    token_in = id
 
-        amount_in = id.balanceOf(strategy)
-        print(
-            f"Executing trade {id}, tokenIn: {token_in} -> tokenOut {token_out} amount {amount_in/1e18}")
+    amount_in = id.balanceOf(strategy)
+    print(
+        f"Executing trade {id}, tokenIn: {token_in} -> tokenOut {token_out} amount {amount_in/1e18}")
 
-        asyncTradeExecutionDetails = [
-            strategy, token_in, token_out, amount_in, 1]
+    asyncTradeExecutionDetails = [
+        strategy, token_in, token_out, amount_in, 1]
 
-        # always start with optimisations. 5 is CallOnlyNoValue
-        optimsations = [["uint8"], [5]]
-        a = optimsations[0]
-        b = optimsations[1]
+    # always start with optimisations. 5 is CallOnlyNoValue
+    optimsations = [["uint8"], [5]]
+    a = optimsations[0]
+    b = optimsations[1]
 
-        calldata = token_in.approve.encode_input(spooky_router, amount_in)
-        t = createTx(token_in, calldata)
-        a = a + t[0]
-        b = b + t[1]
+    calldata = token_in.approve.encode_input(spooky_router, amount_in)
+    t = createTx(token_in, calldata)
+    a = a + t[0]
+    b = b + t[1]
 
-        path = [token_in.address, wftm, token_out.address]
-        calldata = spooky_router.swapExactTokensForTokens.encode_input(
-            amount_in, 0, path, receiver, 2 ** 256 - 1
-        )
-        t = createTx(spooky_router, calldata)
-        a = a + t[0]
-        b = b + t[1]
-        transaction = encode_abi_packed(a, b)
+    path = [token_in.address, wftm, token_out.address]
+    calldata = spooky_router.swapExactTokensForTokens.encode_input(
+        amount_in, 0, path, receiver, 2 ** 256 - 1
+    )
+    t = createTx(spooky_router, calldata)
+    a = a + t[0]
+    b = b + t[1]
+    transaction = encode_abi_packed(a, b)
 
-        # min out must be at least 1 to ensure that the tx works correctly
-        # trade_factory.execute["uint256, address, uint, bytes"](
-        #    multicall_swapper.address, 1, transaction, {"from": ymechs_safe}
-        # )
-        trade_factory.execute['tuple,address,bytes'](asyncTradeExecutionDetails,
-                                                     multicall_swapper.address, transaction, {
-                                                         "from": ymechs_safe}
-                                                     )
-        print(token_out.balanceOf(strategy)/1e18)
+    # min out must be at least 1 to ensure that the tx works correctly
+    # trade_factory.execute["uint256, address, uint, bytes"](
+    #    multicall_swapper.address, 1, transaction, {"from": ymechs_safe}
+    # )
+    trade_factory.execute['tuple,address,bytes'](asyncTradeExecutionDetails,
+                                                 multicall_swapper.address, transaction, {
+                                                     "from": ymechs_safe}
+                                                 )
+
+    afterone = token_out.balanceOf(strategy)
+    print(afterone/1e18)
+    # now do sex
+
+    id = sex
+
+    # wftmboopair = Contract(
+    #     '0xEc7178F4C41f346b2721907F5cF7628E388A7a58')  # spookylp
+    # sexwftmpair = Contract(
+    #     '0xFCEC86aF8774d69e2e4412B8De3f4aBf1f671ecC')  # volatile amm pair
+
+    print(f"Executing trades...")
+
+    print(id.address)
+    receiver = strategy.address
+    token_in = id
+
+    amount_in = id.balanceOf(strategy)
+    print(
+        f"Executing trade {id}, tokenIn: {token_in} -> tokenOut {token_out} amount {amount_in/1e18}")
+
+    asyncTradeExecutionDetails = [
+        strategy, token_in, token_out, amount_in, 1]
+
+    optimsations = [["uint8"], [5]]
+    a = optimsations[0]
+    b = optimsations[1]
+
+    # send all our tokens
+    calldata = token_in.approve.encode_input(solidex_router, amount_in)
+    t = createTx(token_in, calldata)
+    a = a + t[0]
+    b = b + t[1]
+
+    step = [token_in.address, wftm, False]
+    path = [step]
+
+    expectedOut = solidex_router.getAmountsOut(amount_in, path)[1]
+
+    calldata = solidex_router.swapExactTokensForTokens.encode_input(
+        amount_in, 0, path, multicall_swapper, 2 ** 256 - 1
+    )
+    t = createTx(solidex_router, calldata)
+    a = a + t[0]
+    b = b + t[1]
+
+    calldata = wftm.approve.encode_input(spooky_router, expectedOut)
+    t = createTx(wftm, calldata)
+    a = a + t[0]
+    b = b + t[1]
+
+    path = [wftm, token_out.address]
+    calldata = spooky_router.swapExactTokensForTokens.encode_input(
+        expectedOut, 0, path, receiver, 2 ** 256 - 1
+    )
+    t = createTx(spooky_router, calldata)
+    a = a + t[0]
+    b = b + t[1]
+    transaction = encode_abi_packed(a, b)
+
+    trade_factory.execute['tuple,address,bytes'](asyncTradeExecutionDetails,
+                                                 multicall_swapper.address, transaction, {
+                                                     "from": ymechs_safe}
+                                                 )
+
+    aftertwo = token_out.balanceOf(strategy)
+    print(aftertwo/1e18)
+    assert aftertwo > afterone
     strategy.setDoHealthCheck(False, {"from": gov})
     tx = strategy.harvest({"from": strategist})
     print('profit: ', tx.events["Harvested"]["profit"]/1e18)
