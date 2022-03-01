@@ -24,11 +24,11 @@ def test_yswap(
     sex,
     solid,
     multicall_swapper,
+    strategist_ms
 ):
     strategy = liveBooStrat
     vault = Contract(strategy.vault())
     token = Contract(vault.token())
-    # trade_factory = Contract('0xcCF3a9d634C70cFB61e7618DA1E3b55Bb8D41945')
 
     print(token)
     print("CallOnlyOptimizationRequired(): ", eth_utils.to_hex(
