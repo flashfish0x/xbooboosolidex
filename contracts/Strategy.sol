@@ -294,10 +294,13 @@ contract Strategy is BaseStrategy {
             //ratio boo to xboo in xBoo
             uint256 ratio_xboo = xboo.xBOOForBOO(1e18);
 
-            //we compare ratios to make sure there isnt too much slippage. only care if xboo is overvalued
-
-            //allow 0.5% slippage
+            //allow 0.5% slippage by default
             if (ratio_lp < ratio_xboo.mul(lpSlippage).div(1000)) {
+                //dont do anything because we would be lping into the lp at a bad price
+                return;
+            }
+
+            if (ratio_xboo < ratio_lp.mul(lpSlippage).div(1000)) {
                 //dont do anything because we would be lping into the lp at a bad price
                 return;
             }
@@ -529,7 +532,7 @@ contract Strategy is BaseStrategy {
     ///@notice This allows us to manually harvest with our keeper as needed
     function setForceHarvestTriggerOnce(bool _forceHarvestTriggerOnce)
         external
-        onlyAuthorized
+        onlyEmergencyAuthorized
     {
         forceHarvestTriggerOnce = _forceHarvestTriggerOnce;
     }
@@ -537,22 +540,36 @@ contract Strategy is BaseStrategy {
     ///@notice When our strategy has this much credit, harvestTrigger will be true.
     function setMinHarvestCredit(uint256 _minHarvestCredit)
         external
-        onlyAuthorized
+        onlyEmergencyAuthorized
     {
         minHarvestCredit = _minHarvestCredit;
     }
 
-    ///@notice When our strategy has this much credit, harvestTrigger will be true.
-    function setRealiseLosses(bool _realiseLoosses) external onlyAuthorized {
+    function setRealiseLosses(bool _realiseLoosses) external onlyVaultManagers {
         realiseLosses = _realiseLoosses;
     }
 
-    ///@notice When our strategy has this much credit, harvestTrigger will be true.
-    function setLpSlippage(uint256 _slippage) external onlyAuthorized {
+    function setLpSlippage(uint256 _slippage) external onlyEmergencyAuthorized {
+        _setLpSlippage(_slippage, false);
+    }
+
+    //only vault managers can set high slippage
+    function setLpSlippage(uint256 _slippage, bool _force)
+        external
+        onlyVaultManagers
+    {
+        _setLpSlippage(_slippage, _force);
+    }
+
+    function _setLpSlippage(uint256 _slippage, bool _force) internal {
+        require(_slippage <= 10_000, "higher than max");
+        if (!_force) {
+            require(_slippage >= 990, "higher than 1pc slippage set");
+        }
         lpSlippage = _slippage;
     }
 
-    function setDepositerAvoid(bool _avoid) external onlyAuthorized {
+    function setDepositerAvoid(bool _avoid) external onlyGovernance {
         depositerAvoid = _avoid;
     }
 }
